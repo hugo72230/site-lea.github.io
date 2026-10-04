@@ -1,4 +1,3 @@
-```js
 var client = null;
 
 var TABLE = window.LEADY_HORSES_TABLE || "chevaux";
