@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leady Commerce — Chevaux</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="index.html"><img src="logo-leady.jpg" alt="Leady Commerce"></a>
+  <nav>
+    <a href="#chevaux">Chevaux</a>
+    <a href="#apropos">Leady Commerce</a>
+    <a class="nav-admin" href="login.html">Espace gestion</a>
+  </nav>
+  <button class="menu" id="menu" aria-label="Menu">☰</button>
+</header>
+
+<main>
+<section class="hero">
+  <div class="hero-copy">
+    <div class="kicker">LEADY COMMERCE</div>
+    <h1>Trouvez le cheval qui vous <i>correspond.</i></h1>
+    <p>Découvrez nos chevaux disponibles et leurs informations directement depuis notre catalogue.</p>
+    <a class="btn" href="#chevaux">Voir les chevaux</a>
+  </div>
+</section>
+
+<section id="chevaux" class="catalogue wrap">
+  <div class="heading-row">
+    <div>
+      <div class="kicker">CATALOGUE</div>
+      <h2>Nos chevaux</h2>
+    </div>
+  </div>
+
+  <div class="filters">
+    <label>Recherche<input id="search" type="search" placeholder="Nom du cheval"></label>
+    <label>Discipline<select id="discipline"><option value="">Toutes</option></select></label>
+    <label>Sexe<select id="sexe"><option value="">Tous</option></select></label>
+    <label>Âge<select id="age"><option value="">Tous</option></select></label>
+    <label>Tri<select id="sort"><option value="">Plus récents</option><option value="name">Nom</option><option value="priceAsc">Prix croissant</option><option value="priceDesc">Prix décroissant</option></select></label>
+  </div>
+
+  <div id="horse-grid" class="horse-grid"></div>
+  <div id="empty" class="empty" hidden>Aucun cheval ne correspond à votre recherche.</div>
+</section>
+
+<section id="apropos" class="about">
+  <div class="about-grid wrap">
+    <div>
+      <div class="kicker">LEADY COMMERCE</div>
+      <h2>Une sélection pensée pour vous.</h2>
+    </div>
+    <p>Retrouvez les chevaux disponibles, leurs caractéristiques et leurs tarifs dans un catalogue simple et clair.</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <img src="logo-leady.jpg" alt="Leady Commerce">
+  <div>© Leady Commerce</div>
+  <a href="login.html">Accès gestion</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="app.js"></script>
+<script>
+const menu=document.getElementById("menu");
+const nav=document.querySelector(".nav");
+if(menu) menu.addEventListener("click",()=>nav.classList.toggle("nav-open"));
+</script>
+</body>
+</html>

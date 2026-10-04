@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connexion — Leady Commerce</title><link rel="stylesheet" href="style.css"></head>
+<body class="auth-page">
+<main class="auth-wrap">
+  <a href="index.html" class="back">← Retour au site</a>
+  <section class="panel login">
+    <div class="kicker">LEADY COMMERCE</div>
+    <h1>Espace gestion</h1>
+    <p>Connectez-vous avec votre compte administrateur Supabase.</p>
+    <form id="login-form">
+      <label>Email<input id="email" type="email" autocomplete="username" required></label>
+      <label>Mot de passe<input id="password" type="password" autocomplete="current-password" required></label>
+      <button id="login-button" class="btn" type="submit">Se connecter</button>
+      <div id="login-message" class="message"></div>
+    </form>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="auth.js"></script>
+</body>
+</html>
