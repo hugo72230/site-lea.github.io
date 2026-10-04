@@ -3,124 +3,198 @@
 <html lang="fr">
 
 <head>
+
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
 
   <title>Gestion — Leady Commerce</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
+
 </head>
+
 
 <body>
 
+
 <header class="nav">
 
-  <a class="brand" href="index.html">
-    <img src="logo-leady.jpg" alt="Leady Commerce">
+  <a
+    class="brand"
+    href="index.html"
+  >
+
+    <img
+      src="logo-leady.jpg"
+      alt="Leady Commerce"
+    >
+
   </a>
 
+
   <nav>
-    <a href="index.html">Voir le site</a>
-    <button id="logout" class="outline" type="button">
+
+    <a href="index.html">
+      Voir le site
+    </a>
+
+    <button
+      id="logout"
+      class="outline"
+      type="button"
+    >
       Déconnexion
     </button>
+
   </nav>
 
 </header>
 
 
+
 <main class="admin wrap">
+
 
   <div class="heading-row">
 
     <div>
-      <div class="kicker">ADMINISTRATION</div>
-      <h1>Gestion des chevaux</h1>
+
+      <div class="kicker">
+        ADMINISTRATION
+      </div>
+
+      <h1>
+        Gestion des chevaux
+      </h1>
+
     </div>
 
   </div>
 
 
-  <div id="admin-message" class="message"></div>
+
+  <div
+    id="admin-message"
+    class="message"
+  ></div>
+
 
 
   <section class="admin-layout">
 
 
     <!-- =========================
-         AJOUTER UN CHEVAL
+         AJOUT
     ========================== -->
 
     <div class="panel">
 
-      <h2>Ajouter un cheval</h2>
+      <h2>
+        Ajouter un cheval
+      </h2>
+
 
       <form id="horse-form">
 
+
         <label>
+
           Nom
+
           <input
             id="nom"
             type="text"
             required
           >
+
         </label>
+
 
 
         <div class="two">
 
+
           <label>
+
             Discipline
+
             <input
               id="discipline"
               type="text"
             >
+
           </label>
 
 
           <label>
+
             Sexe
+
             <input
               id="sexe"
               type="text"
             >
+
           </label>
+
 
         </div>
 
 
+
         <div class="two">
 
+
           <label>
+
             Âge
+
             <input
               id="age"
               type="text"
             >
+
           </label>
 
 
           <label>
+
             Prix
+
             <input
               id="prix"
               type="number"
               min="0"
             >
+
           </label>
+
 
         </div>
 
 
-        <!-- PHOTO -->
+
+        <!-- =====================
+             PHOTO
+        ====================== -->
 
         <label>
+
           Photo du cheval
+
           <input
             id="photo-file"
             type="file"
             accept="image/*"
           >
+
         </label>
 
 
@@ -130,9 +204,13 @@
         ></div>
 
 
-        <!-- DESCRIPTION -->
+
+        <!-- =====================
+             DESCRIPTION
+        ====================== -->
 
         <label>
+
           Description
 
           <textarea
@@ -143,7 +221,10 @@
         </label>
 
 
-        <!-- VENDU -->
+
+        <!-- =====================
+             VENDU
+        ====================== -->
 
         <label class="check">
 
@@ -157,6 +238,7 @@
         </label>
 
 
+
         <button
           id="add-horse-button"
           class="btn"
@@ -165,45 +247,55 @@
           Ajouter le cheval
         </button>
 
+
       </form>
 
     </div>
 
 
+
     <!-- =========================
-         LISTE DES CHEVAUX
+         LISTE
     ========================== -->
 
     <div class="panel">
 
-      <h2>Chevaux existants</h2>
+      <h2>
+        Chevaux existants
+      </h2>
+
 
       <div id="horse-list">
+
         Chargement...
+
       </div>
+
 
     </div>
 
 
   </section>
 
+
 </main>
+
 
 
 <!-- SUPABASE -->
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+></script>
+
 
 <script src="supabase-config.js"></script>
 
-<!--
-  ?v=4 oblige le navigateur à prendre
-  la nouvelle version du fichier.
--->
 
-<script src="gestion.js?v=4"></script>
+<script src="gestion.js?v=5"></script>
 
 
 </body>
+
 </html>
 ```
