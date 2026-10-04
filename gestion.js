@@ -1,33 +1,39 @@
 ```javascript
 let client = null;
 
-const table = () => window.LEADY_HORSES_TABLE || "chevaux";
+function table() {
+  return window.LEADY_HORSES_TABLE || "chevaux";
+}
 
-function msg(t, type = "") {
-  const e = document.getElementById("admin-message");
+function msg(t, type) {
+  var e = document.getElementById("admin-message");
+
+  if (!e) return;
+
   e.textContent = t;
-  e.className = "message " + type;
+  e.className = "message " + (type || "");
 }
 
 function esc(v) {
-  return String(v ?? "").replace(/[&<>"']/g, function(c) {
-    return {
+  return String(v || "").replace(/[&<>"']/g, function(c) {
+    var map = {
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
       '"': "&quot;",
       "'": "&#039;"
-    }[c];
+    };
+
+    return map[c];
   });
 }
 
 
 /* =========================
-   CONNEXION
+   DEMARRAGE
 ========================= */
 
 async function boot() {
-
   try {
 
     client = window.supabase.createClient(
@@ -35,9 +41,9 @@ async function boot() {
       window.LEADY_SUPABASE_ANON_KEY
     );
 
-    const result = await client.auth.getSession();
+    var result = await client.auth.getSession();
 
-    const session = result.data.session;
+    var session = result.data.session;
 
     if (!session) {
       location.href = "login.html";
@@ -55,31 +61,30 @@ async function boot() {
 
 
 /* =========================
-   AFFICHAGE DES CHEVAUX
+   CHARGER LES CHEVAUX
 ========================= */
 
 async function load() {
 
-  const box = document.getElementById("horse-list");
+  var box = document.getElementById("horse-list");
 
-  const result = await client
+  var result = await client
     .from(table())
     .select("*");
 
-  const data = result.data;
-  const error = result.error;
-
-  if (error) {
+  if (result.error) {
 
     box.innerHTML =
       '<div class="empty">' +
-      esc(error.message) +
-      '</div>';
+      esc(result.error.message) +
+      "</div>";
 
     return;
   }
 
-  if (!data || !data.length) {
+  var data = result.data;
+
+  if (!data || data.length === 0) {
 
     box.innerHTML =
       '<div class="empty">Aucun cheval.</div>';
@@ -87,49 +92,56 @@ async function load() {
     return;
   }
 
-  box.innerHTML = data.map(function(h) {
+  box.innerHTML = "";
 
-    let photo = "";
+  data.forEach(function(h) {
+
+    var item = document.createElement("div");
+
+    item.className = "admin-item";
+
+    var photo = "";
 
     if (h.photo) {
+
       photo =
         '<img src="' +
         esc(h.photo) +
         '" alt="' +
         esc(h.nom || "Cheval") +
         '" style="width:80px;height:80px;object-fit:cover;border-radius:10px;">';
+
     }
 
-    return `
-      <div class="admin-item">
+    item.innerHTML =
+      photo +
+      '<div style="flex:1;">' +
+        "<strong>" +
+        esc(h.nom || "Sans nom") +
+        "</strong>" +
+        '<div class="meta">' +
+          esc(h.discipline || "") +
+          " · " +
+          esc(h.sexe || "") +
+          " · " +
+          esc(h.age || "") +
+          " ans" +
+        "</div>" +
+      "</div>" +
+      '<button class="delete" data-id="' +
+        esc(h.id) +
+        '">' +
+        "Supprimer" +
+      "</button>";
 
-        ${photo}
+    box.appendChild(item);
 
-        <div style="flex:1;">
-          <strong>${esc(h.nom || "Sans nom")}</strong>
-
-          <div class="meta">
-            ${esc(h.discipline || "")}
-            ·
-            ${esc(h.sexe || "")}
-            ·
-            ${esc(h.age || "")} ans
-          </div>
-        </div>
-
-        <button
-          class="delete"
-          data-id="${esc(h.id)}">
-          Supprimer
-        </button>
-
-      </div>
-    `;
-
-  }).join("");
+  });
 
 
-  /* SUPPRESSION */
+  /* =========================
+     BOUTONS SUPPRIMER
+  ========================= */
 
   box.querySelectorAll(".delete").forEach(function(button) {
 
@@ -139,7 +151,7 @@ async function load() {
         return;
       }
 
-      const result = await client
+      var result = await client
         .from(table())
         .delete()
         .eq("id", button.dataset.id);
@@ -157,7 +169,7 @@ async function load() {
 
       msg("Cheval supprimé.", "success");
 
-      load();
+      await load();
 
     });
 
@@ -167,123 +179,143 @@ async function load() {
 
 
 /* =========================
-   PREVISUALISATION PHOTO
+   PAGE CHARGEE
 ========================= */
 
 document.addEventListener("DOMContentLoaded", function() {
 
-  const photoInput =
+  /* =========================
+     APERCU DE LA PHOTO
+  ========================= */
+
+  var photoInput =
     document.getElementById("photo-file");
 
-  const preview =
+  var preview =
     document.getElementById("photo-preview");
 
+  if (photoInput) {
 
-  photoInput.addEventListener("change", function() {
+    photoInput.addEventListener("change", function() {
 
-    preview.innerHTML = "";
+      preview.innerHTML = "";
 
-    const file = photoInput.files[0];
+      var file = photoInput.files[0];
 
-    if (!file) {
-      return;
-    }
+      if (!file) {
+        return;
+      }
 
-    const image = document.createElement("img");
+      var image = document.createElement("img");
 
-    image.src = URL.createObjectURL(file);
+      image.src = URL.createObjectURL(file);
 
-    image.style.width = "150px";
-    image.style.height = "150px";
-    image.style.objectFit = "cover";
-    image.style.borderRadius = "12px";
-    image.style.marginTop = "5px";
+      image.style.width = "150px";
+      image.style.height = "150px";
+      image.style.objectFit = "cover";
+      image.style.borderRadius = "12px";
+      image.style.marginTop = "5px";
 
-    preview.appendChild(image);
+      preview.appendChild(image);
 
-  });
+    });
+
+  }
 
 
   /* =========================
      DECONNEXION
   ========================= */
 
-  document
-    .getElementById("logout")
-    .addEventListener("click", async function() {
+  var logout =
+    document.getElementById("logout");
 
-      await client.auth.signOut();
+  if (logout) {
+
+    logout.addEventListener("click", async function() {
+
+      if (client) {
+        await client.auth.signOut();
+      }
 
       location.href = "login.html";
 
     });
 
+  }
+
 
   /* =========================
-     AJOUT CHEVAL
+     AJOUTER UN CHEVAL
   ========================= */
 
-  document
-    .getElementById("horse-form")
-    .addEventListener("submit", async function(e) {
+  var form =
+    document.getElementById("horse-form");
+
+  if (form) {
+
+    form.addEventListener("submit", async function(e) {
 
       e.preventDefault();
 
-      const button = e.submitter;
+      var button =
+        form.querySelector('button[type="submit"]');
 
       button.disabled = true;
 
       try {
 
-        const nom =
+        var nom =
           document.getElementById("nom").value.trim();
 
-        const discipline =
+        var discipline =
           document.getElementById("discipline").value.trim();
 
-        const sexe =
+        var sexe =
           document.getElementById("sexe").value.trim();
 
-        const age =
+        var age =
           document.getElementById("age").value.trim();
 
-        const prixValue =
+        var prix =
           document.getElementById("prix").value;
 
-        const description =
+        var description =
           document.getElementById("description").value.trim();
 
-        const vendu =
+        var vendu =
           document.getElementById("vendu").checked;
 
-        const photoInput =
-          document.getElementById("photo-file");
-
-        const file =
-          photoInput.files[0];
+        var file =
+          photoInput ? photoInput.files[0] : null;
 
 
         /* =========================
-           ENVOI DE LA PHOTO
+           PHOTO
         ========================= */
 
-        let photoUrl = "";
+        var photoUrl = "";
 
 
         if (file) {
 
-          const extension =
-            file.name.split(".").pop().toLowerCase();
+          var extension =
+            file.name
+              .split(".")
+              .pop()
+              .toLowerCase();
 
-          const fileName =
+          var fileName =
             Date.now() +
             "-" +
-            Math.random().toString(36).substring(2) +
+            Math.random()
+              .toString(36)
+              .substring(2) +
             "." +
             extension;
 
 
-          const upload =
+          var upload =
             await client.storage
               .from("chevaux")
               .upload(fileName, file, {
@@ -302,78 +334,61 @@ document.addEventListener("DOMContentLoaded", function() {
           }
 
 
-          /* =========================
-             RECUPERATION URL
-          ========================= */
-
-          const publicUrl =
+          var publicResult =
             client.storage
               .from("chevaux")
               .getPublicUrl(fileName);
 
 
           photoUrl =
-            publicUrl.data.publicUrl;
+            publicResult.data.publicUrl;
 
         }
 
 
         /* =========================
-           CREATION DU CHEVAL
+           CREER LE CHEVAL
         ========================= */
 
-        const row = {
-
+        var row = {
           nom: nom,
-
           discipline: discipline,
-
           sexe: sexe,
-
           age: age,
-
-          prix: prixValue || null,
-
+          prix: prix || null,
           photo: photoUrl,
-
           description: description,
-
           vendu: vendu
-
         };
 
 
-        const result =
+        var insertResult =
           await client
             .from(table())
             .insert(row);
 
 
-        if (result.error) {
+        if (insertResult.error) {
 
           throw new Error(
             "Ajout impossible : " +
-            result.error.message
+            insertResult.error.message
           );
 
         }
 
 
         msg(
-          "Cheval ajouté avec sa photo.",
+          "Cheval ajouté avec succès.",
           "success"
         );
 
 
-        document
-          .getElementById("horse-form")
-          .reset();
+        form.reset();
 
-
-        document
-          .getElementById("photo-preview")
-          .innerHTML = "";
-
+        if (preview) {
+          preview.innerHTML = "";
+        }
 
         await load();
 
@@ -385,16 +400,19 @@ document.addEventListener("DOMContentLoaded", function() {
           "error"
         );
 
-      } finally {
-
-        button.disabled = false;
-
       }
+
+
+      button.disabled = false;
 
     });
 
+  }
 
-  /* LANCEMENT */
+
+  /* =========================
+     DEMARRAGE
+  ========================= */
 
   boot();
 
