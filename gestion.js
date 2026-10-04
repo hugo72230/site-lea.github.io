@@ -1,553 +1,199 @@
 ```javascript
-/* =========================================================
-   LEADY COMMERCE
-   GESTION DES CHEVAUX
-   ========================================================= */
-
-
-/* =========================================================
-   VARIABLES
-   ========================================================= */
-
 var client = null;
 
-var TABLE =
-  window.LEADY_HORSES_TABLE || "chevaux";
-
+var TABLE = window.LEADY_HORSES_TABLE || "chevaux";
 var BUCKET = "chevaux";
 
 
-/* =========================================================
-   MESSAGE
-   ========================================================= */
+function showMessage(text, type) {
+  var box = document.getElementById("admin-message");
 
-function message(texte, type) {
+  if (!box) return;
 
-  var element =
-    document.getElementById("admin-message");
-
-  if (!element) {
-    return;
-  }
-
-  element.textContent = texte;
-
-  element.className =
-    "message " + (type || "");
-
+  box.textContent = text;
+  box.className = "message " + (type || "");
 }
 
 
-/* =========================================================
-   SECURITE HTML
-   ========================================================= */
-
 function escapeHTML(value) {
-
-  if (value === null || value === undefined) {
-    return "";
-  }
-
-  return String(value)
+  return String(value == null ? "" : value)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
-
 }
 
 
-/* =========================================================
-   DEMARRAGE
-   ========================================================= */
-
-async function start() {
-
-  try {
-
-    console.log("=== LEADY GESTION ===");
-
-    console.log(
-      "Table utilisée :",
-      TABLE
-    );
-
-
-    /* Vérification Supabase */
-
-    if (!window.supabase) {
-
-      throw new Error(
-        "Supabase n'est pas chargé."
-      );
-
-    }
-
-
-    if (!window.LEADY_SUPABASE_URL) {
-
-      throw new Error(
-        "LEADY_SUPABASE_URL est introuvable."
-      );
-
-    }
-
-
-    if (!window.LEADY_SUPABASE_ANON_KEY) {
-
-      throw new Error(
-        "LEADY_SUPABASE_ANON_KEY est introuvable."
-      );
-
-    }
-
-
-    /* Connexion */
-
-    client =
-      window.supabase.createClient(
-        window.LEADY_SUPABASE_URL,
-        window.LEADY_SUPABASE_ANON_KEY
-      );
-
-
-    console.log(
-      "Connexion Supabase OK"
-    );
-
-
-    /* Vérification connexion utilisateur */
-
-    var sessionResult =
-      await client.auth.getSession();
-
-
-    if (
-      sessionResult.error
-    ) {
-
-      throw sessionResult.error;
-
-    }
-
-
-    var session =
-      sessionResult.data.session;
-
-
-    if (!session) {
-
-      console.log(
-        "Aucune connexion utilisateur."
-      );
-
-      window.location.href =
-        "login.html";
-
-      return;
-
-    }
-
-
-    console.log(
-      "Utilisateur connecté :",
-      session.user.email
-    );
-
-
-    /* Chargement */
-
-    await loadHorses();
-
-
-  } catch (error) {
-
-    console.error(
-      "ERREUR DEMARRAGE :",
-      error
-    );
-
-    message(
-      "Erreur : " + error.message,
-      "error"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
+/* =====================================================
    CHARGER LES CHEVAUX
-   ========================================================= */
+===================================================== */
 
 async function loadHorses() {
 
-  var list =
-    document.getElementById("horse-list");
+  var list = document.getElementById("horse-list");
 
+  if (!list) return;
 
-  if (!list) {
+  list.innerHTML = "Chargement...";
 
-    console.error(
-      "horse-list introuvable"
-    );
+  var result = await client
+    .from(TABLE)
+    .select("*");
+
+  if (result.error) {
+
+    console.error(result.error);
+
+    list.innerHTML =
+      '<div class="empty">' +
+      "Erreur : " +
+      escapeHTML(result.error.message) +
+      "</div>";
 
     return;
-
   }
 
+  var horses = result.data || [];
 
-  list.innerHTML =
-    "Chargement des chevaux...";
+  if (horses.length === 0) {
 
+    list.innerHTML =
+      '<div class="empty">Aucun cheval.</div>';
 
-  try {
+    return;
+  }
 
-    console.log(
-      "Chargement de la table :",
-      TABLE
-    );
-
-
-    var result =
-      await client
-        .from(TABLE)
-        .select("*")
-        .order("id", {
-          ascending: false
-        });
+  list.innerHTML = "";
 
 
-    if (result.error) {
+  horses.forEach(function(horse) {
 
-      console.error(
-        "ERREUR LECTURE :",
-        result.error
-      );
+    var item = document.createElement("div");
 
-      list.innerHTML =
-        "<div class=\"empty\">" +
-        "Erreur de chargement : " +
-        escapeHTML(
-          result.error.message
-        ) +
-        "</div>";
+    item.className = "admin-item";
 
-      return;
 
+    /* PHOTO */
+
+    if (horse.photo) {
+
+      var image = document.createElement("img");
+
+      image.src = horse.photo;
+
+      image.alt = horse.nom || "Cheval";
+
+      image.style.width = "90px";
+      image.style.height = "90px";
+      image.style.objectFit = "cover";
+      image.style.borderRadius = "10px";
+      image.style.marginRight = "15px";
+
+      item.appendChild(image);
     }
 
 
-    var horses =
-      result.data || [];
+    /* INFORMATIONS */
+
+    var info = document.createElement("div");
+
+    info.style.flex = "1";
+
+    var name = document.createElement("strong");
+
+    name.textContent =
+      horse.nom || "Sans nom";
+
+    info.appendChild(name);
 
 
-    console.log(
-      "Chevaux trouvés :",
-      horses
-    );
+    var meta = document.createElement("div");
 
+    meta.className = "meta";
 
-    /* Aucun cheval */
+    var texte = [];
 
-    if (horses.length === 0) {
-
-      list.innerHTML =
-        "<div class=\"empty\">" +
-        "Aucun cheval." +
-        "</div>";
-
-      return;
-
+    if (horse.discipline) {
+      texte.push(horse.discipline);
     }
 
+    if (horse.sexe) {
+      texte.push(horse.sexe);
+    }
 
-    /* Nettoyage */
+    if (horse.age) {
+      texte.push(horse.age + " ans");
+    }
 
-    list.innerHTML = "";
+    meta.textContent = texte.join(" · ");
 
+    info.appendChild(meta);
 
-    /* Création de chaque cheval */
-
-    horses.forEach(function(horse) {
-
-      var item =
-        document.createElement("div");
-
-      item.className =
-        "admin-item";
+    item.appendChild(info);
 
 
-      /* PHOTO */
+    /* SUPPRIMER */
 
-      var photoHTML = "";
+    var button = document.createElement("button");
 
-      if (
-        horse.photo &&
-        String(horse.photo).trim() !== ""
-      ) {
+    button.className = "delete";
+    button.type = "button";
+    button.textContent = "Supprimer";
 
-        photoHTML =
-          "<img " +
-          "src=\"" +
-          escapeHTML(horse.photo) +
-          "\" " +
-          "alt=\"" +
-          escapeHTML(
-            horse.nom || "Cheval"
-          ) +
-          "\" " +
-          "style=\"" +
-          "width:90px;" +
-          "height:90px;" +
-          "object-fit:cover;" +
-          "border-radius:10px;" +
-          "margin-right:15px;" +
-          "\">";
+    button.addEventListener("click", async function() {
 
+      if (!confirm("Supprimer ce cheval ?")) {
+        return;
       }
 
+      var deleted = await client
+        .from(TABLE)
+        .delete()
+        .eq("id", horse.id);
 
-      /* INFORMATIONS */
+      if (deleted.error) {
 
-      var nom =
-        horse.nom || "Sans nom";
+        showMessage(
+          "Suppression impossible : " +
+          deleted.error.message,
+          "error"
+        );
 
-      var discipline =
-        horse.discipline || "";
+        return;
+      }
 
-      var sexe =
-        horse.sexe || "";
-
-      var age =
-        horse.age || "";
-
-
-      var informations =
-        "<div style=\"" +
-        "flex:1;" +
-        "\">" +
-
-        "<strong>" +
-        escapeHTML(nom) +
-        "</strong>" +
-
-        "<div class=\"meta\">" +
-
-        escapeHTML(
-          discipline
-        ) +
-
-        (
-          discipline && sexe
-            ? " · "
-            : ""
-        ) +
-
-        escapeHTML(
-          sexe
-        ) +
-
-        (
-          age
-            ? " · " +
-              escapeHTML(age) +
-              " ans"
-            : ""
-        ) +
-
-        "</div>" +
-
-        "</div>";
-
-
-      /* BOUTON SUPPRIMER */
-
-      var deleteButton =
-        document.createElement("button");
-
-      deleteButton.className =
-        "delete";
-
-      deleteButton.type =
-        "button";
-
-      deleteButton.textContent =
-        "Supprimer";
-
-      deleteButton.dataset.id =
-        horse.id;
-
-
-      /* Structure */
-
-      item.innerHTML =
-        photoHTML +
-        informations;
-
-
-      item.appendChild(
-        deleteButton
+      showMessage(
+        "Cheval supprimé.",
+        "success"
       );
 
-
-      list.appendChild(
-        item
-      );
-
-
-      /* Suppression */
-
-      deleteButton.addEventListener(
-        "click",
-        function() {
-
-          deleteHorse(
-            horse.id
-          );
-
-        }
-      );
+      loadHorses();
 
     });
 
 
-  } catch (error) {
+    item.appendChild(button);
 
-    console.error(
-      "ERREUR LOAD :",
-      error
-    );
+    list.appendChild(item);
 
-    list.innerHTML =
-      "<div class=\"empty\">" +
-      "Erreur : " +
-      escapeHTML(
-        error.message
-      ) +
-      "</div>";
-
-  }
+  });
 
 }
 
 
-/* =========================================================
-   SUPPRIMER UN CHEVAL
-   ========================================================= */
+/* =====================================================
+   ENVOYER UNE PHOTO
+===================================================== */
 
-async function deleteHorse(id) {
-
-  if (!id) {
-
-    message(
-      "ID du cheval introuvable.",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  if (
-    !confirm(
-      "Voulez-vous vraiment supprimer ce cheval ?"
-    )
-  ) {
-
-    return;
-
-  }
-
-
-  try {
-
-    console.log(
-      "Suppression du cheval :",
-      id
-    );
-
-
-    var result =
-      await client
-        .from(TABLE)
-        .delete()
-        .eq("id", id);
-
-
-    if (result.error) {
-
-      console.error(
-        "ERREUR SUPPRESSION :",
-        result.error
-      );
-
-      message(
-        "Suppression impossible : " +
-        result.error.message,
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    message(
-      "Cheval supprimé.",
-      "success"
-    );
-
-
-    await loadHorses();
-
-
-  } catch (error) {
-
-    console.error(
-      "ERREUR DELETE :",
-      error
-    );
-
-    message(
-      "Erreur : " +
-      error.message,
-      "error"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   UPLOAD PHOTO
-   ========================================================= */
-
-async function uploadPhoto(file) {
+async function sendPhoto(file) {
 
   if (!file) {
-
     return "";
-
   }
 
 
-  console.log(
-    "Upload de la photo :",
-    file.name
-  );
-
-
-  /* Vérification type */
-
-  if (
-    !file.type ||
-    file.type.indexOf("image/") !== 0
-  ) {
+  if (file.type.indexOf("image/") !== 0) {
 
     throw new Error(
       "Le fichier choisi n'est pas une image."
@@ -556,540 +202,397 @@ async function uploadPhoto(file) {
   }
 
 
-  /* Limite 10 Mo */
-
-  if (
-    file.size > 10 * 1024 * 1024
-  ) {
+  if (file.size > 10 * 1024 * 1024) {
 
     throw new Error(
-      "La photo est trop grosse. Maximum : 10 Mo."
+      "La photo dépasse 10 Mo."
     );
 
   }
 
 
-  /* Extension */
+  var extension = "jpg";
 
-  var extension =
-    file.name
-      .split(".")
-      .pop()
-      .toLowerCase();
+  if (file.name.indexOf(".") !== -1) {
 
-
-  if (!extension) {
-
-    extension = "jpg";
+    extension =
+      file.name
+        .split(".")
+        .pop()
+        .toLowerCase();
 
   }
 
-
-  /* Nom unique */
 
   var filename =
     Date.now() +
     "-" +
     Math.random()
       .toString(36)
-      .substring(2, 12) +
+      .substring(2) +
     "." +
     extension;
 
 
-  /* Envoi */
+  console.log(
+    "Envoi photo :",
+    filename
+  );
 
-  var upload =
-    await client.storage
-      .from(BUCKET)
-      .upload(
-        filename,
-        file,
-        {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: file.type
-        }
-      );
+
+  var upload = await client.storage
+    .from(BUCKET)
+    .upload(
+      filename,
+      file,
+      {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type
+      }
+    );
 
 
   if (upload.error) {
 
-    console.error(
-      "ERREUR STORAGE :",
-      upload.error
-    );
-
     throw new Error(
-      "Impossible d'envoyer la photo : " +
+      "Erreur photo : " +
       upload.error.message
     );
 
   }
 
 
-  console.log(
-    "Photo envoyée :",
-    filename
-  );
+  var publicUrl = client.storage
+    .from(BUCKET)
+    .getPublicUrl(filename);
 
 
-  /* URL publique */
-
-  var publicURL =
-    client.storage
-      .from(BUCKET)
-      .getPublicUrl(
-        filename
-      );
-
-
-  if (
-    !publicURL ||
-    !publicURL.data ||
-    !publicURL.data.publicUrl
-  ) {
-
-    throw new Error(
-      "Impossible de récupérer l'adresse de la photo."
-    );
-
-  }
-
-
-  console.log(
-    "URL photo :",
-    publicURL.data.publicUrl
-  );
-
-
-  return publicURL.data.publicUrl;
+  return publicUrl.data.publicUrl;
 
 }
 
 
-/* =========================================================
+/* =====================================================
    APERCU PHOTO
-   ========================================================= */
+===================================================== */
 
-function setupPhotoPreview() {
+function setupPhoto() {
 
   var input =
-    document.getElementById(
-      "photo-file"
-    );
+    document.getElementById("photo-file");
 
   var preview =
-    document.getElementById(
-      "photo-preview"
-    );
+    document.getElementById("photo-preview");
 
 
   if (!input || !preview) {
-
     return;
-
   }
 
 
-  input.addEventListener(
-    "change",
-    function() {
+  input.addEventListener("change", function() {
 
-      preview.innerHTML = "";
+    preview.innerHTML = "";
 
+    var file = input.files[0];
 
-      var file =
-        input.files &&
-        input.files[0];
-
-
-      if (!file) {
-
-        return;
-
-      }
-
-
-      var image =
-        document.createElement("img");
-
-
-      image.src =
-        URL.createObjectURL(
-          file
-        );
-
-
-      image.style.width =
-        "150px";
-
-      image.style.height =
-        "150px";
-
-      image.style.objectFit =
-        "cover";
-
-      image.style.borderRadius =
-        "12px";
-
-
-      preview.appendChild(
-        image
-      );
-
+    if (!file) {
+      return;
     }
-  );
+
+
+    var image =
+      document.createElement("img");
+
+    image.src =
+      URL.createObjectURL(file);
+
+    image.style.width = "150px";
+    image.style.height = "150px";
+    image.style.objectFit = "cover";
+    image.style.borderRadius = "12px";
+
+    preview.appendChild(image);
+
+  });
 
 }
 
 
-/* =========================================================
+/* =====================================================
    AJOUTER UN CHEVAL
-   ========================================================= */
+===================================================== */
 
-function setupHorseForm() {
+function setupForm() {
 
   var form =
-    document.getElementById(
-      "horse-form"
-    );
+    document.getElementById("horse-form");
 
 
   if (!form) {
-
-    console.error(
-      "horse-form introuvable"
-    );
-
     return;
-
   }
 
 
-  form.addEventListener(
-    "submit",
-    async function(event) {
+  form.addEventListener("submit", async function(event) {
 
-      event.preventDefault();
+    event.preventDefault();
 
 
-      var button =
-        document.getElementById(
-          "add-horse-button"
-        );
+    var button =
+      document.getElementById(
+        "add-horse-button"
+      );
 
 
-      if (button) {
+    if (button) {
 
-        button.disabled =
-          true;
-
-        button.textContent =
-          "Ajout en cours...";
-
-      }
-
-
-      try {
-
-        /* =====================
-           RECUPERATION CHAMPS
-        ===================== */
-
-        var nom =
-          document
-            .getElementById("nom")
-            .value
-            .trim();
-
-
-        var discipline =
-          document
-            .getElementById("discipline")
-            .value
-            .trim();
-
-
-        var sexe =
-          document
-            .getElementById("sexe")
-            .value
-            .trim();
-
-
-        var age =
-          document
-            .getElementById("age")
-            .value
-            .trim();
-
-
-        var prix =
-          document
-            .getElementById("prix")
-            .value;
-
-
-        var description =
-          document
-            .getElementById("description")
-            .value
-            .trim();
-
-
-        var vendu =
-          document
-            .getElementById("vendu")
-            .checked;
-
-
-        var photoInput =
-          document.getElementById(
-            "photo-file"
-          );
-
-
-        var file =
-          photoInput &&
-          photoInput.files &&
-          photoInput.files[0];
-
-
-        /* =====================
-           VERIFICATION NOM
-        ===================== */
-
-        if (!nom) {
-
-          throw new Error(
-            "Tu dois mettre le nom du cheval."
-          );
-
-        }
-
-
-        /* =====================
-           PHOTO
-        ===================== */
-
-        var photoURL = "";
-
-
-        if (file) {
-
-          message(
-            "Envoi de la photo...",
-            ""
-          );
-
-
-          photoURL =
-            await uploadPhoto(
-              file
-            );
-
-        }
-
-
-        /* =====================
-           CREATION DONNEE
-        ===================== */
-
-        var horse = {
-
-          nom: nom,
-
-          discipline:
-            discipline,
-
-          sexe:
-            sexe,
-
-          age:
-            age,
-
-          prix:
-            prix || null,
-
-          photo:
-            photoURL,
-
-          description:
-            description,
-
-          vendu:
-            vendu
-
-        };
-
-
-        console.log(
-          "Ajout du cheval :",
-          horse
-        );
-
-
-        /* =====================
-           INSERT SUPABASE
-        ===================== */
-
-        var result =
-          await client
-            .from(TABLE)
-            .insert(horse);
-
-
-        if (result.error) {
-
-          console.error(
-            "ERREUR INSERT :",
-            result.error
-          );
-
-
-          throw new Error(
-            "Ajout impossible : " +
-            result.error.message
-          );
-
-        }
-
-
-        /* =====================
-           SUCCES
-        ===================== */
-
-        message(
-          "Cheval ajouté avec succès !",
-          "success"
-        );
-
-
-        /* Reset */
-
-        form.reset();
-
-
-        var preview =
-          document.getElementById(
-            "photo-preview"
-          );
-
-
-        if (preview) {
-
-          preview.innerHTML = "";
-
-        }
-
-
-        /* Recharge la liste */
-
-        await loadHorses();
-
-
-      } catch (error) {
-
-        console.error(
-          "ERREUR AJOUT CHEVAL :",
-          error
-        );
-
-
-        message(
-          error.message,
-          "error"
-        );
-
-      }
-
-
-      if (button) {
-
-        button.disabled =
-          false;
-
-        button.textContent =
-          "Ajouter le cheval";
-
-      }
+      button.disabled = true;
+      button.textContent = "Ajout en cours...";
 
     }
-  );
+
+
+    try {
+
+      var nom =
+        document.getElementById("nom").value.trim();
+
+      var discipline =
+        document.getElementById("discipline").value.trim();
+
+      var sexe =
+        document.getElementById("sexe").value.trim();
+
+      var age =
+        document.getElementById("age").value.trim();
+
+      var prix =
+        document.getElementById("prix").value;
+
+      var description =
+        document.getElementById("description").value.trim();
+
+      var vendu =
+        document.getElementById("vendu").checked;
+
+
+      var photoInput =
+        document.getElementById("photo-file");
+
+      var file =
+        photoInput &&
+        photoInput.files.length > 0
+          ? photoInput.files[0]
+          : null;
+
+
+      if (!nom) {
+
+        throw new Error(
+          "Le nom du cheval est obligatoire."
+        );
+
+      }
+
+
+      /* PHOTO */
+
+      var photo = "";
+
+      if (file) {
+
+        showMessage(
+          "Envoi de la photo...",
+          ""
+        );
+
+        photo =
+          await sendPhoto(file);
+
+      }
+
+
+      /* CHEVAL */
+
+      var horse = {
+
+        nom: nom,
+
+        discipline: discipline,
+
+        sexe: sexe,
+
+        age: age,
+
+        prix: prix || null,
+
+        photo: photo,
+
+        description: description,
+
+        vendu: vendu
+
+      };
+
+
+      console.log(
+        "Cheval à ajouter :",
+        horse
+      );
+
+
+      /* INSERT */
+
+      var result =
+        await client
+          .from(TABLE)
+          .insert(horse);
+
+
+      if (result.error) {
+
+        console.error(
+          "Erreur ajout :",
+          result.error
+        );
+
+        throw new Error(
+          "Ajout impossible : " +
+          result.error.message
+        );
+
+      }
+
+
+      showMessage(
+        "Cheval ajouté avec succès !",
+        "success"
+      );
+
+
+      form.reset();
+
+
+      var preview =
+        document.getElementById(
+          "photo-preview"
+        );
+
+      if (preview) {
+        preview.innerHTML = "";
+      }
+
+
+      await loadHorses();
+
+
+    } catch (error) {
+
+      console.error(
+        "ERREUR :",
+        error
+      );
+
+      showMessage(
+        error.message,
+        "error"
+      );
+
+    }
+
+
+    if (button) {
+
+      button.disabled = false;
+      button.textContent = "Ajouter le cheval";
+
+    }
+
+  });
 
 }
 
 
-/* =========================================================
+/* =====================================================
    DECONNEXION
-   ========================================================= */
+===================================================== */
 
 function setupLogout() {
 
-  var button =
-    document.getElementById(
-      "logout"
+  var logout =
+    document.getElementById("logout");
+
+
+  if (!logout) return;
+
+
+  logout.addEventListener("click", async function() {
+
+    await client.auth.signOut();
+
+    window.location.href =
+      "login.html";
+
+  });
+
+}
+
+
+/* =====================================================
+   DEMARRAGE
+===================================================== */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  async function() {
+
+    console.log(
+      "LEADY GESTION - nouvelle version"
     );
 
 
-  if (!button) {
+    /* Supabase */
 
-    return;
+    client =
+      window.supabase.createClient(
+        window.LEADY_SUPABASE_URL,
+        window.LEADY_SUPABASE_ANON_KEY
+      );
 
-  }
+
+    /* Connexion */
+
+    var sessionResult =
+      await client.auth.getSession();
 
 
-  button.addEventListener(
-    "click",
-    async function() {
-
-      try {
-
-        if (client) {
-
-          await client.auth.signOut();
-
-        }
-
-      } catch (error) {
-
-        console.error(
-          error
-        );
-
-      }
-
+    if (
+      sessionResult.error ||
+      !sessionResult.data.session
+    ) {
 
       window.location.href =
         "login.html";
 
+      return;
+
     }
-  );
-
-}
 
 
-/* =========================================================
-   DEMARRAGE PAGE
-   ========================================================= */
+    /* Initialisation */
 
-document.addEventListener(
-  "DOMContentLoaded",
-  function() {
+    setupPhoto();
 
-    console.log(
-      "gestion.js version 4 chargé"
-    );
-
-
-    setupPhotoPreview();
-
-    setupHorseForm();
+    setupForm();
 
     setupLogout();
 
-    start();
+
+    /* Liste */
+
+    await loadHorses();
 
   }
 );
