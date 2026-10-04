@@ -4,7 +4,7 @@
 
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
 
   <title>Gestion — Leady Commerce</title>
 
@@ -21,9 +21,7 @@
 
   <nav>
     <a href="index.html">Voir le site</a>
-    <button id="logout" class="outline" type="button">
-      Déconnexion
-    </button>
+    <button id="logout" class="outline">Déconnexion</button>
   </nav>
 
 </header>
@@ -59,11 +57,7 @@
 
         <label>
           Nom
-          <input
-            id="nom"
-            type="text"
-            required
-          >
+          <input id="nom" required>
         </label>
 
 
@@ -71,19 +65,13 @@
 
           <label>
             Discipline
-            <input
-              id="discipline"
-              type="text"
-            >
+            <input id="discipline">
           </label>
 
 
           <label>
             Sexe
-            <input
-              id="sexe"
-              type="text"
-            >
+            <input id="sexe">
           </label>
 
         </div>
@@ -93,81 +81,47 @@
 
           <label>
             Âge
-            <input
-              id="age"
-              type="text"
-            >
+            <input id="age">
           </label>
 
 
           <label>
             Prix
-            <input
-              id="prix"
-              type="number"
-              min="0"
-            >
+            <input id="prix" type="number" min="0">
           </label>
 
         </div>
 
 
-        <!-- PHOTO -->
-
         <label>
-          Photo du cheval
-          <input
-            id="photo-file"
-            type="file"
-            accept="image/*"
-          >
+          Photo (URL)
+          <input id="photo" type="url">
         </label>
 
-
-        <div
-          id="photo-preview"
-          style="margin-top:10px;"
-        ></div>
-
-
-        <!-- DESCRIPTION -->
 
         <label>
           Description
-
-          <textarea
-            id="description"
-            rows="6"
-          ></textarea>
-
+          <textarea id="description" rows="6"></textarea>
         </label>
 
 
-        <!-- VENDU -->
-
         <label class="check">
 
-          <input
-            id="vendu"
-            type="checkbox"
-          >
+          <input id="vendu" type="checkbox">
 
           Vendu
 
         </label>
 
 
-        <button
-          id="add-horse-button"
-          class="btn"
-          type="submit"
-        >
+        <button class="btn" type="submit">
           Ajouter le cheval
         </button>
 
       </form>
 
     </div>
+
 
 
     <!-- =========================
@@ -178,32 +132,215 @@
 
       <h2>Chevaux existants</h2>
 
+      <p class="meta">
+        Clique sur un cheval pour modifier sa fiche.
+      </p>
+
+
       <div id="horse-list">
         Chargement...
       </div>
 
     </div>
 
+  </section>
+
+
+
+  <!-- =========================
+       MODIFICATION
+  ========================== -->
+
+  <section
+    id="edit-panel"
+    class="panel edit-panel"
+    style="display:none;"
+  >
+
+    <div class="heading-row">
+
+      <div>
+
+        <div class="kicker">
+          MODIFICATION
+        </div>
+
+        <h2 id="edit-title">
+          Modifier le cheval
+        </h2>
+
+      </div>
+
+
+      <button
+        id="cancel-edit"
+        class="outline"
+        type="button"
+      >
+        Fermer
+      </button>
+
+    </div>
+
+
+
+    <form id="edit-form">
+
+      <input
+        id="edit-id"
+        type="hidden"
+      >
+
+
+      <label>
+
+        Nom
+
+        <input
+          id="edit-nom"
+          required
+        >
+
+      </label>
+
+
+
+      <div class="two">
+
+        <label>
+
+          Discipline
+
+          <input
+            id="edit-discipline"
+          >
+
+        </label>
+
+
+        <label>
+
+          Sexe
+
+          <input
+            id="edit-sexe"
+          >
+
+        </label>
+
+      </div>
+
+
+
+      <div class="two">
+
+        <label>
+
+          Âge
+
+          <input
+            id="edit-age"
+          >
+
+        </label>
+
+
+        <label>
+
+          Prix
+
+          <input
+            id="edit-prix"
+            type="number"
+            min="0"
+          >
+
+        </label>
+
+      </div>
+
+
+
+      <label>
+
+        Photo (URL)
+
+        <input
+          id="edit-photo"
+          type="url"
+        >
+
+      </label>
+
+
+
+      <label>
+
+        Description
+
+        <textarea
+          id="edit-description"
+          rows="8"
+        ></textarea>
+
+      </label>
+
+
+
+      <label class="check">
+
+        <input
+          id="edit-vendu"
+          type="checkbox"
+        >
+
+        Vendu
+
+      </label>
+
+
+
+      <div
+        style="
+          display:flex;
+          gap:10px;
+          flex-wrap:wrap;
+        "
+      >
+
+        <button
+          class="btn"
+          type="submit"
+        >
+          Enregistrer les modifications
+        </button>
+
+
+        <button
+          id="cancel-edit-2"
+          class="outline"
+          type="button"
+        >
+          Annuler
+        </button>
+
+      </div>
+
+    </form>
 
   </section>
 
 </main>
 
 
-<!-- SUPABASE -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="supabase-config.js"></script>
 
-<!--
-  ?v=4 oblige le navigateur à prendre
-  la nouvelle version du fichier.
--->
-
-<script src="gestion.js?v=4"></script>
-
+<script src="gestion.js"></script>
 
 </body>
+
 </html>
 ```
