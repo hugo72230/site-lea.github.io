@@ -12,3 +12,185 @@
 @media(max-width:560px){.hero-copy{padding:65px 7%}.hero h1{font-size:46px}.horse-grid,.filters,.two{grid-template-columns:1fr}.heading-row{align-items:start;flex-direction:column}.admin h1{font-size:44px}}
 .nav.nav-open nav{display:flex}
 @media(max-width:760px){.nav{position:relative}.nav nav{position:absolute;top:100%;left:0;right:0;background:#fff;padding:18px 25px;flex-direction:column;gap:18px;box-shadow:0 8px 20px rgba(0,0,0,.12);z-index:1000}.nav.nav-open .menu{transform:rotate(90deg)}}
+.horse-card {
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.horse-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(40,37,34,.10);
+}
+
+
+.horse-detail-page {
+  padding: 55px 0 90px;
+}
+
+
+.detail-back {
+  display: inline-block;
+  margin-bottom: 35px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.detail-back:hover {
+  color: var(--gold2);
+}
+
+
+.horse-detail-grid {
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap: 55px;
+  align-items: start;
+}
+
+
+.horse-detail-photo {
+  width: 100%;
+  min-height: 600px;
+  background: linear-gradient(135deg,#e4ddd4,#a89c8d);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.horse-detail-photo img {
+  width: 100%;
+  height: 600px;
+  object-fit: cover;
+  display: block;
+}
+
+
+.detail-photo-empty {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .16em;
+}
+
+
+.horse-detail-content {
+  padding: 25px 0;
+}
+
+
+.horse-detail-content h1 {
+  font: 600 68px/.95 "Cormorant Garamond",serif;
+  margin: 15px 0 30px;
+}
+
+
+.horse-detail-meta {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  margin-bottom: 25px;
+}
+
+
+.horse-detail-meta div {
+  padding: 17px 10px;
+  border-right: 1px solid var(--line);
+}
+
+
+.horse-detail-meta div:last-child {
+  border-right: 0;
+}
+
+
+.horse-detail-meta span {
+  display: block;
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+
+
+.horse-detail-meta strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+
+.horse-detail-price {
+  color: var(--gold2);
+  font-size: 20px;
+  font-weight: 600;
+  margin: 25px 0 40px;
+}
+
+
+.horse-detail-description {
+  border-top: 1px solid var(--line);
+  padding-top: 25px;
+}
+
+
+.horse-detail-description p {
+  color: #5f5952;
+  font-size: 13px;
+  line-height: 2;
+  white-space: pre-line;
+}
+
+
+@media(max-width:850px) {
+
+  .horse-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .horse-detail-photo {
+    min-height: 450px;
+  }
+
+  .horse-detail-photo img {
+    height: 450px;
+  }
+
+}
+
+
+@media(max-width:560px) {
+
+  .horse-detail-page {
+    padding-top: 35px;
+  }
+
+  .horse-detail-content h1 {
+    font-size: 52px;
+  }
+
+  .horse-detail-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .horse-detail-meta div {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .horse-detail-meta div:last-child {
+    border-bottom: 0;
+  }
+
+  .horse-detail-photo {
+    min-height: 350px;
+  }
+
+  .horse-detail-photo img {
+    height: 350px;
+  }
+
+}
