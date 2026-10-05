@@ -194,3 +194,52 @@
   }
 
 }
+
+/* CARROUSEL DES CHEVAUX */
+
+.horse-grid{
+  display:flex;
+  gap:22px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-behavior:smooth;
+  padding:5px 5px 20px;
+  scroll-snap-type:x mandatory;
+}
+
+.horse-grid .horse-card{
+  flex:0 0 calc((100% - 44px) / 3);
+  scroll-snap-align:start;
+}
+
+/* Barre de défilement */
+.horse-grid::-webkit-scrollbar{
+  height:8px;
+}
+
+.horse-grid::-webkit-scrollbar-track{
+  background:var(--cream);
+}
+
+.horse-grid::-webkit-scrollbar-thumb{
+  background:var(--gold);
+  border-radius:20px;
+}
+
+/* Tablette */
+@media(max-width:850px){
+
+  .horse-grid .horse-card{
+    flex:0 0 calc((100% - 22px) / 2);
+  }
+
+}
+
+/* Téléphone */
+@media(max-width:560px){
+
+  .horse-grid .horse-card{
+    flex:0 0 85%;
+  }
+
+}
