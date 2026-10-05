@@ -59,7 +59,19 @@ function render() {
       </div>
     </article>`;
   }).join("");
-  document.getElementById("empty").hidden=rows.length!==0;
+
+document.querySelectorAll(".horse-card").forEach(card => {
+  card.addEventListener("click", () => {
+    const id = card.dataset.id;
+
+    if (id) {
+      window.location.href =
+        `cheval.html?id=${encodeURIComponent(id)}`;
+    }
+  });
+});
+
+document.getElementById("empty").hidden=rows.length!==0;
 }
 function fill(id, keys) {
   const el=document.getElementById(id); if(!el)return;
