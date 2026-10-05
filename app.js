@@ -49,7 +49,7 @@ function render() {
     const name=pick(h,["nom","name"])||"Sans nom";
     const image=pick(h,["photo","image","image_url","photo_url"]);
     const sold=Boolean(pick(h,["vendu","sold","is_sold"]));
-    return `<article class="horse-card">
+    return `<article class="horse-card" data-id="${esc(h.id)}" style="cursor:pointer;">
       <div class="horse-photo">${image?`<img src="${esc(image)}" alt="${esc(name)}" loading="lazy">`:`<span class="photo-empty">PHOTO À VENIR</span>`}</div>
       <div class="horse-body">${sold?`<span class="status sold">VENDU</span>`:""}
         <h3>${esc(name)}</h3>
