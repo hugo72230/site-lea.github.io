@@ -1,309 +1,531 @@
-
 let client = null;
 
 const table = () => window.LEADY_HORSES_TABLE || "chevaux";
 
-function msg(t, type = "") {
+
+// ==============================
+// MESSAGE
+// ==============================
+
+function msg(t, type) {
+
   const e = document.getElementById("admin-message");
+
+  if (!e) return;
+
   e.textContent = t;
-  e.className = "message " + type;
+  e.className = "message " + (type || "");
+
 }
+
+
+// ==============================
+// SECURITE
+// ==============================
 
 function esc(v) {
-  return String(v ?? "").replace(/[&<>"']/g, function(c) {
-    return {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    }[c];
-  });
+
+  return String(v || "").replace(
+    /[&<>"']/g,
+    function(c) {
+
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[c];
+
+    }
+  );
+
 }
 
+
+// ==============================
+// DEMARRAGE
+// ==============================
+
 async function boot() {
+
   try {
+
     client = window.supabase.createClient(
       window.LEADY_SUPABASE_URL,
       window.LEADY_SUPABASE_ANON_KEY
     );
 
+
     const result = await client.auth.getSession();
+
     const session = result.data.session;
 
+
     if (!session) {
-      location.href = "login.html";
+
+      window.location.href = "login.html";
+
       return;
+
     }
+
 
     await load();
 
-  } catch (e) {
-    msg("Erreur : " + e.message, "error");
+
+  } catch (error) {
+
+    console.error(error);
+
+    msg(
+      "Erreur : " + error.message,
+      "error"
+    );
+
   }
+
 }
 
+
+// ==============================
+// CHARGER LES CHEVAUX
+// ==============================
+
 async function load() {
+
   const box = document.getElementById("horse-list");
+
+  if (!box) return;
+
 
   box.innerHTML = "Chargement...";
 
+
   const result = await client
     .from(table())
-    .select("*")
-    .order("id", { ascending: false });
+    .select("*");
+
 
   const data = result.data;
   const error = result.error;
 
+
   if (error) {
+
+    console.error(error);
+
     box.innerHTML =
-      '<div class="empty">' + esc(error.message) + "</div>";
+      '<div class="empty">' +
+      esc(error.message) +
+      '</div>';
+
     return;
+
   }
+
 
   if (!data || data.length === 0) {
+
     box.innerHTML =
       '<div class="empty">Aucun cheval.</div>';
+
     return;
+
   }
 
+
   box.innerHTML = data.map(function(h) {
+
     return `
-      <div class="admin-item horse-card" data-id="${esc(h.id)}" style="cursor:pointer;">
+      <div class="admin-item">
 
         <div>
-          <strong>${esc(h.nom || h.name || "Sans nom")}</strong>
+
+          <strong>
+            ${esc(h.nom || "Sans nom")}
+          </strong>
 
           <div class="meta">
+
             ${esc(h.discipline || "")}
             ·
-            ${esc(h.sexe || h.sex || "")}
+            ${esc(h.sexe || "")}
             ·
             ${esc(h.age || "")} ans
+
           </div>
 
-          <div class="meta">
-            ${h.vendu ? "🔴 Vendu" : "🟢 Disponible"}
-          </div>
         </div>
 
-        <button class="delete" data-id="${esc(h.id)}" type="button">
+        <button
+          class="delete"
+          type="button"
+          data-id="${esc(h.id)}"
+        >
           Supprimer
         </button>
 
       </div>
     `;
+
   }).join("");
 
-  const cards = box.querySelectorAll(".horse-card");
 
-  cards.forEach(function(card) {
-    card.addEventListener("click", function(event) {
+  // ==============================
+  // SUPPRESSION
+  // ==============================
 
-      if (event.target.closest(".delete")) {
-        return;
-      }
+  const buttons =
+    box.querySelectorAll(".delete");
 
-      const id = card.dataset.id;
 
-      const cheval = data.find(function(h) {
-        return String(h.id) === String(id);
-      });
+  buttons.forEach(function(button) {
 
-      if (cheval) {
-        openEdit(cheval);
-      }
-    });
-  });
-
-  const deleteButtons = box.querySelectorAll(".delete");
-
-  deleteButtons.forEach(function(button) {
-
-    button.addEventListener("click", async function(event) {
-
-      event.stopPropagation();
+    button.addEventListener("click", async function() {
 
       if (!confirm("Supprimer ce cheval ?")) {
         return;
       }
+
 
       const result = await client
         .from(table())
         .delete()
         .eq("id", button.dataset.id);
 
-      if (result.error) {
-        msg(
-          "Suppression impossible : " + result.error.message,
-          "error"
-        );
-        return;
-      }
-
-      msg("Cheval supprimé.", "success");
-
-      await load();
-    });
-  });
-}
-
-function openEdit(h) {
-
-  document.getElementById("edit-panel").style.display = "block";
-
-  document.getElementById("edit-id").value = h.id || "";
-
-  document.getElementById("edit-nom").value =
-    h.nom || h.name || "";
-
-  document.getElementById("edit-discipline").value =
-    h.discipline || "";
-
-  document.getElementById("edit-sexe").value =
-    h.sexe || h.sex || "";
-
-  document.getElementById("edit-age").value =
-    h.age || "";
-
-  document.getElementById("edit-prix").value =
-    h.prix || "";
-
-  document.getElementById("edit-photo").value =
-    h.photo || "";
-
-  document.getElementById("edit-description").value =
-    h.description || "";
-
-  document.getElementById("edit-vendu").checked =
-    Boolean(h.vendu);
-
-  document.getElementById("edit-title").textContent =
-    "Modifier : " + (h.nom || h.name || "Cheval");
-
-  document.getElementById("edit-panel").scrollIntoView({
-    behavior: "smooth",
-    block: "start"
-  });
-}
-
-function closeEdit() {
-  document.getElementById("edit-panel").style.display = "none";
-}
-
-document.addEventListener("DOMContentLoaded", function() {
-
-  boot();
-
-  document.getElementById("logout").addEventListener(
-    "click",
-    async function() {
-
-      await client.auth.signOut();
-
-      location.href = "login.html";
-    }
-  );
-
-
-  /* AJOUTER */
-
-  document.getElementById("horse-form").addEventListener(
-    "submit",
-    async function(e) {
-
-      e.preventDefault();
-
-      const row = {
-        nom: document.getElementById("nom").value.trim(),
-        discipline: document.getElementById("discipline").value.trim(),
-        sexe: document.getElementById("sexe").value.trim(),
-        age: document.getElementById("age").value.trim(),
-        prix: document.getElementById("prix").value || null,
-        photo: document.getElementById("photo").value.trim(),
-        description: document.getElementById("description").value.trim(),
-        vendu: document.getElementById("vendu").checked
-      };
-
-      const result = await client
-        .from(table())
-        .insert(row);
 
       if (result.error) {
+
+        console.error(result.error);
+
         msg(
-          "Ajout impossible : " + result.error.message,
+          "Suppression impossible : " +
+          result.error.message,
           "error"
         );
+
         return;
+
       }
 
-      msg("Cheval ajouté.", "success");
-
-      e.target.reset();
-
-      await load();
-    }
-  );
-
-
-  /* MODIFIER */
-
-  document.getElementById("edit-form").addEventListener(
-    "submit",
-    async function(e) {
-
-      e.preventDefault();
-
-      const id = document.getElementById("edit-id").value;
-
-      const updates = {
-        nom: document.getElementById("edit-nom").value.trim(),
-        discipline: document.getElementById("edit-discipline").value.trim(),
-        sexe: document.getElementById("edit-sexe").value.trim(),
-        age: document.getElementById("edit-age").value.trim(),
-        prix: document.getElementById("edit-prix").value || null,
-        photo: document.getElementById("edit-photo").value.trim(),
-        description: document.getElementById("edit-description").value.trim(),
-        vendu: document.getElementById("edit-vendu").checked
-      };
-
-      const result = await client
-        .from(table())
-        .update(updates)
-        .eq("id", id);
-
-      if (result.error) {
-        msg(
-          "Modification impossible : " + result.error.message,
-          "error"
-        );
-        return;
-      }
 
       msg(
-        "Modifications enregistrées.",
+        "Cheval supprimé.",
         "success"
       );
 
+
       await load();
 
-      closeEdit();
+    });
+
+  });
+
+}
+
+
+// ==============================
+// APERCU PHOTO
+// ==============================
+
+function setupPhoto() {
+
+  const input =
+    document.getElementById("photo-file");
+
+  const preview =
+    document.getElementById("photo-preview");
+
+
+  if (!input || !preview) {
+    return;
+  }
+
+
+  input.addEventListener("change", function() {
+
+    preview.innerHTML = "";
+
+
+    if (!input.files || !input.files[0]) {
+      return;
     }
-  );
 
 
-  /* ANNULER */
+    const file = input.files[0];
 
-  document.getElementById("cancel-edit").addEventListener(
-    "click",
-    closeEdit
-  );
 
-  document.getElementById("cancel-edit-2").addEventListener(
-    "click",
-    closeEdit
-  );
+    if (!file.type.startsWith("image/")) {
 
-});
+      msg(
+        "Le fichier sélectionné n'est pas une image.",
+        "error"
+      );
+
+      input.value = "";
+
+      return;
+
+    }
+
+
+    const img = document.createElement("img");
+
+
+    img.src =
+      URL.createObjectURL(file);
+
+
+    img.style.maxWidth = "250px";
+    img.style.maxHeight = "200px";
+    img.style.borderRadius = "10px";
+    img.style.objectFit = "cover";
+
+
+    preview.appendChild(img);
+
+  });
+
+}
+
+
+// ==============================
+// PAGE
+// ==============================
+
+document.addEventListener(
+  "DOMContentLoaded",
+  function() {
+
+
+    // Connexion
+    boot();
+
+
+    // ==========================
+    // DECONNEXION
+    // ==========================
+
+    const logout =
+      document.getElementById("logout");
+
+
+    if (logout) {
+
+      logout.addEventListener(
+        "click",
+        async function() {
+
+          if (client) {
+
+            await client.auth.signOut();
+
+          }
+
+          window.location.href =
+            "login.html";
+
+        }
+      );
+
+    }
+
+
+    // ==========================
+    // PHOTO
+    // ==========================
+
+    setupPhoto();
+
+
+    // ==========================
+    // FORMULAIRE
+    // ==========================
+
+    const form =
+      document.getElementById("horse-form");
+
+
+    if (!form) {
+
+      console.error(
+        "ERREUR : horse-form introuvable"
+      );
+
+      return;
+
+    }
+
+
+    form.addEventListener(
+      "submit",
+      async function(e) {
+
+        e.preventDefault();
+
+
+        console.log(
+          "BOUTON AJOUT CHEVAL CLIQUE"
+        );
+
+
+        if (!client) {
+
+          msg(
+            "Supabase n'est pas encore connecté.",
+            "error"
+          );
+
+          return;
+
+        }
+
+
+        // ========================
+        // RECUPERATION
+        // ========================
+
+        const nom =
+          document.getElementById("nom").value.trim();
+
+        const discipline =
+          document.getElementById("discipline").value.trim();
+
+        const sexe =
+          document.getElementById("sexe").value.trim();
+
+        const age =
+          document.getElementById("age").value.trim();
+
+        const prix =
+          document.getElementById("prix").value;
+
+        const description =
+          document.getElementById("description").value.trim();
+
+        const vendu =
+          document.getElementById("vendu").checked;
+
+
+        // ========================
+        // VERIFICATION NOM
+        // ========================
+
+        if (!nom) {
+
+          msg(
+            "Le nom du cheval est obligatoire.",
+            "error"
+          );
+
+          return;
+
+        }
+
+
+        // ========================
+        // CREATION
+        // ========================
+
+        const row = {
+
+          nom: nom,
+
+          discipline: discipline,
+
+          sexe: sexe,
+
+          age: age,
+
+          prix: prix
+            ? Number(prix)
+            : null,
+
+          photo: "",
+
+          description: description,
+
+          vendu: vendu
+
+        };
+
+
+        console.log(
+          "DONNEES ENVOYEES :",
+          row
+        );
+
+
+        msg(
+          "Ajout du cheval...",
+          ""
+        );
+
+
+        // ========================
+        // SUPABASE
+        // ========================
+
+        const result = await client
+          .from(table())
+          .insert(row);
+
+
+        console.log(
+          "REPONSE SUPABASE :",
+          result
+        );
+
+
+        if (result.error) {
+
+          console.error(
+            "ERREUR SUPABASE :",
+            result.error
+          );
+
+
+          msg(
+            "Ajout impossible : " +
+            result.error.message,
+            "error"
+          );
+
+          return;
+
+        }
+
+
+        // ========================
+        // SUCCES
+        // ========================
+
+        msg(
+          "Cheval ajouté avec succès !",
+          "success"
+        );
+
+
+        form.reset();
+
+
+        const preview =
+          document.getElementById("photo-preview");
+
+
+        if (preview) {
+
+          preview.innerHTML = "";
+
+        }
+
+
+        await load();
+
+      }
+    );
+
+  }
+);
 ```
