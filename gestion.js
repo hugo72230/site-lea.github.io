@@ -1,4 +1,3 @@
-
 let client=null;
 
 const table=()=>window.LEADY_HORSES_TABLE||"chevaux";
@@ -47,6 +46,8 @@ async function boot(){
 
   }catch(e){
 
+    console.error(e);
+
     msg("Erreur : "+e.message,"error");
 
   }
@@ -85,7 +86,6 @@ async function load(){
     <div class="admin-item">
 
       <div>
-
         <strong>
           ${esc(h.nom||h.name||"Sans nom")}
         </strong>
@@ -97,7 +97,6 @@ async function load(){
           ·
           ${esc(h.age||"")} ans
         </div>
-
       </div>
 
       <button
@@ -112,52 +111,126 @@ async function load(){
   `).join("");
 
 
-  box.querySelectorAll(".delete").forEach(b=>b.addEventListener("click",async()=>{
+  box.querySelectorAll(".delete").forEach(b=>{
 
-    if(!confirm("Supprimer ce cheval ?"))
-      return;
+    b.addEventListener("click",async()=>{
 
-    const {error}=await client
-      .from(table())
-      .delete()
-      .eq("id",b.dataset.id);
+      if(!confirm("Supprimer ce cheval ?"))
+        return;
 
-    if(error){
+      const {error}=await client
+        .from(table())
+        .delete()
+        .eq("id",b.dataset.id);
+
+      if(error){
+
+        msg(
+          "Suppression impossible : "+
+          error.message,
+          "error"
+        );
+
+        return;
+
+      }
 
       msg(
-        "Suppression impossible : "+
-        error.message,
-        "error"
+        "Cheval supprimé.",
+        "success"
       );
 
-      return;
+      await load();
 
-    }
+    });
 
-    msg(
-      "Cheval supprimé.",
-      "success"
-    );
-
-    load();
-
-  }));
+  });
 
 }
 
 
-/* =========================================================
-   AJOUT DU CHEVAL
-========================================================= */
+async function uploadPhoto(file){
+
+  if(!file)
+    return "";
+
+
+  const extension=
+    file.name
+      .split(".")
+      .pop()
+      .toLowerCase();
+
+
+  const fileName=
+    Date.now()+
+    "-" +
+    Math.random()
+      .toString(36)
+      .substring(2,10)+
+    "."+
+    extension;
+
+
+  const filePath=
+    "chevaux/"+fileName;
+
+
+  console.log(
+    "Upload image :",
+    filePath
+  );
+
+
+  const {error}=await client
+    .storage
+    .from(STORAGE_BUCKET)
+    .upload(
+      filePath,
+      file,
+      {
+        cacheControl:"3600",
+        upsert:false
+      }
+    );
+
+
+  if(error){
+
+    console.error(
+      "Erreur upload :",
+      error
+    );
+
+    throw error;
+
+  }
+
+
+  const {data}=client
+    .storage
+    .from(STORAGE_BUCKET)
+    .getPublicUrl(filePath);
+
+
+  if(!data || !data.publicUrl){
+
+    throw new Error(
+      "Impossible de récupérer l'URL de la photo."
+    );
+
+  }
+
+
+  return data.publicUrl;
+
+}
+
 
 document.addEventListener("DOMContentLoaded",()=>{
 
   boot();
 
-
-  /* =========================
-     APERCU DE LA PHOTO
-  ========================= */
 
   const photoInput=
     document.getElementById("photo-file");
@@ -170,12 +243,15 @@ document.addEventListener("DOMContentLoaded",()=>{
 
     photoInput.addEventListener("change",()=>{
 
-      photoPreview.innerHTML="";
+      if(photoPreview)
+        photoPreview.innerHTML="";
+
 
       const file=photoInput.files[0];
 
       if(!file)
         return;
+
 
       if(!file.type.startsWith("image/")){
 
@@ -191,25 +267,27 @@ document.addEventListener("DOMContentLoaded",()=>{
       }
 
 
-      const img=document.createElement("img");
+      if(photoPreview){
 
-      img.src=URL.createObjectURL(file);
+        const img=
+          document.createElement("img");
 
-      img.style.maxWidth="250px";
-      img.style.maxHeight="200px";
-      img.style.objectFit="cover";
-      img.style.borderRadius="10px";
+        img.src=
+          URL.createObjectURL(file);
 
-      photoPreview.appendChild(img);
+        img.style.maxWidth="250px";
+        img.style.maxHeight="200px";
+        img.style.objectFit="cover";
+        img.style.borderRadius="10px";
+
+        photoPreview.appendChild(img);
+
+      }
 
     });
 
   }
 
-
-  /* =========================
-     DECONNEXION
-  ========================= */
 
   document
     .getElementById("logout")
@@ -222,10 +300,6 @@ document.addEventListener("DOMContentLoaded",()=>{
     });
 
 
-  /* =========================
-     FORMULAIRE
-  ========================= */
-
   document
     .getElementById("horse-form")
     .addEventListener("submit",async e=>{
@@ -233,145 +307,129 @@ document.addEventListener("DOMContentLoaded",()=>{
       e.preventDefault();
 
 
-      /* =========================
-         INFORMATIONS DU CHEVAL
-      ========================= */
+      try{
 
-      const row={
-
-        nom:
-          document
-            .getElementById("nom")
-            .value
-            .trim(),
-
-        discipline:
-          document
-            .getElementById("discipline")
-            .value
-            .trim(),
-
-        sexe:
-          document
-            .getElementById("sexe")
-            .value
-            .trim(),
-
-        age:
-          document
-            .getElementById("age")
-            .value
-            .trim(),
-
-        prix:
-          document
-            .getElementById("prix")
-            .value || null,
-
-        photo:"",
-
-        description:
-          document
-            .getElementById("description")
-            .value
-            .trim(),
-
-        vendu:
-          document
-            .getElementById("vendu")
-            .checked
-
-      };
+        const photoInput=
+          document.getElementById("photo-file");
 
 
-      /* =========================
-         IMAGE
-      ========================= */
-
-      const file=
-        photoInput &&
-        photoInput.files &&
-        photoInput.files[0];
+        const file=
+          photoInput &&
+          photoInput.files &&
+          photoInput.files[0];
 
 
-      if(file){
-
-        msg("Envoi de la photo...");
+        let photo="";
 
 
-        const extension=
-          file.name
-            .split(".")
-            .pop()
-            .toLowerCase();
-
-
-        const fileName=
-          Date.now()+
-          "-" +
-          Math.random()
-            .toString(36)
-            .substring(2,10) +
-          "."+
-          extension;
-
-
-        const filePath=
-          "chevaux/"+fileName;
-
-
-        const {error:uploadError}=
-          await client
-            .storage
-            .from(STORAGE_BUCKET)
-            .upload(
-              filePath,
-              file,
-              {
-                cacheControl:"3600",
-                upsert:false
-              }
-            );
-
-
-        if(uploadError){
+        if(file){
 
           msg(
-            "Upload image impossible : "+
-            uploadError.message,
-            "error"
+            "Envoi de la photo..."
           );
 
-          console.error(uploadError);
+
+          photo=
+            await uploadPhoto(file);
+
+        }
+
+
+        const row={
+
+          nom:
+            document
+              .getElementById("nom")
+              .value
+              .trim(),
+
+          discipline:
+            document
+              .getElementById("discipline")
+              .value
+              .trim(),
+
+          sexe:
+            document
+              .getElementById("sexe")
+              .value
+              .trim(),
+
+          age:
+            document
+              .getElementById("age")
+              .value
+              .trim(),
+
+          prix:
+            document
+              .getElementById("prix")
+              .value || null,
+
+          photo:photo,
+
+          description:
+            document
+              .getElementById("description")
+              .value
+              .trim(),
+
+          vendu:
+            document
+              .getElementById("vendu")
+              .checked
+
+        };
+
+
+        console.log(
+          "Cheval à enregistrer :",
+          row
+        );
+
+
+        const {error}=await client
+          .from(table())
+          .insert(row);
+
+
+        if(error){
+
+          console.error(error);
+
+          msg(
+            "Ajout impossible : "+
+            error.message,
+            "error"
+          );
 
           return;
 
         }
 
 
-        const {data:urlData}=
-          client
-            .storage
-            .from(STORAGE_BUCKET)
-            .getPublicUrl(filePath);
+        msg(
+          "Cheval ajouté.",
+          "success"
+        );
 
 
-        row.photo=urlData.publicUrl;
-
-      }
+        e.target.reset();
 
 
-      /* =========================
-         AJOUT SUPABASE
-      ========================= */
-
-      const {error}=
-        await client
-          .from(table())
-          .insert(row);
+        if(photoPreview)
+          photoPreview.innerHTML="";
 
 
-      if(error){
+        await load();
+
+
+      }catch(error){
+
+        console.error(
+          "Erreur ajout cheval :",
+          error
+        );
 
         msg(
           "Ajout impossible : "+
@@ -379,36 +437,8 @@ document.addEventListener("DOMContentLoaded",()=>{
           "error"
         );
 
-        console.error(error);
-
-        return;
-
       }
-
-
-      /* =========================
-         SUCCES
-      ========================= */
-
-      msg(
-        "Cheval ajouté.",
-        "success"
-      );
-
-
-      e.target.reset();
-
-
-      if(photoPreview){
-
-        photoPreview.innerHTML="";
-
-      }
-
-
-      load();
 
     });
 
 });
-```
