@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Leady Commerce — Cheval</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="nav">
+
+  <a class="brand" href="index.html">
+    <img src="logo-leady.jpg" alt="Leady Commerce">
+  </a>
+
+  <nav>
+    <a href="index.html#chevaux">Chevaux</a>
+    <a href="index.html#apropos">Leady Commerce</a>
+    <a class="nav-admin" href="login.html">Espace gestion</a>
+  </nav>
+
+  <button class="menu" id="menu" aria-label="Menu">☰</button>
+
+</header>
+
+
+<main class="horse-detail-page">
+
+  <div class="wrap">
+
+    <a class="detail-back" href="index.html#chevaux">
+      ← Retour aux chevaux
+    </a>
+
+    <div id="horse-detail">
+
+      <div class="empty">
+        Chargement du cheval...
+      </div>
+
+    </div>
+
+  </div>
+
+</main>
+
+
+<footer>
+
+  <img
+    src="logo-leady.jpg"
+    alt="LEADY COMMERCE CARNET DE VENTE DE CHEVAUX"
+  >
+
+  <div>© Leady Commerce car</div>
+
+  <a href="login.html">Accès gestion</a>
+
+</footer>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="supabase-config.js"></script>
+
+<script>
+
+let supabaseClient = null;
+
+
+function esc(v) {
+
+  return String(v ?? "").replace(
+    /[&<>"']/g,
+    c => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#039;"
+    }[c])
+  );
+
+}
+
+
+function price(v) {
+
+  if (v === "" || v == null) {
+    return "Prix sur demande";
+  }
+
+  const n = Number(v);
+
+  return Number.isFinite(n)
+    ? new Intl.NumberFormat("fr-FR").format(n) + " €"
+    : String(v);
+
+}
+
+
+async function loadHorse() {
+
+  const box = document.getElementById("horse-detail");
+
+  try {
+
+    supabaseClient = window.supabase.createClient(
+      window.LEADY_SUPABASE_URL,
+      window.LEADY_SUPABASE_ANON_KEY
+    );
+
+
+    const params = new URLSearchParams(
+      window.location.search
+    );
+
+    const id = params.get("id");
+
+
+    if (!id) {
+
+      box.innerHTML = `
+        <div class="empty">
+          Aucun cheval sélectionné.
+        </div>
+      `;
+
+      return;
+
+    }
+
+
+    const { data: horse, error } =
+      await supabaseClient
+        .from(window.LEADY_HORSES_TABLE || "chevaux")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+
+    if (error) {
+      throw error;
+    }
+
+
+    if (!horse) {
+
+      box.innerHTML = `
+        <div class="empty">
+          Cheval introuvable.
+        </div>
+      `;
+
+      return;
+
+    }
+
+
+    const name =
+      horse.nom ||
+      horse.name ||
+      "Sans nom";
+
+
+    const image =
+      horse.photo ||
+      horse.image ||
+      horse.image_url ||
+      horse.photo_url ||
+      "";
+
+
+    const discipline =
+      horse.discipline || "";
+
+
+    const sexe =
+      horse.sexe ||
+      horse.sex ||
+      "";
+
+
+    const age =
+      horse.age || "";
+
+
+    const description =
+      horse.description ||
+      horse.desc ||
+      "";
+
+
+    const sold =
+      Boolean(
+        horse.vendu ||
+        horse.sold ||
+        horse.is_sold
+      );
+
+
+    box.innerHTML = `
+
+      <div class="horse-detail-grid">
+
+        <div class="horse-detail-photo">
+
+          ${
+            image
+              ? `
+                <img
+                  src="${esc(image)}"
+                  alt="${esc(name)}"
+                >
+              `
+              : `
+                <div class="detail-photo-empty">
+                  PHOTO À VENIR
+                </div>
+              `
+          }
+
+        </div>
+
+
+        <div class="horse-detail-content">
+
+          ${
+            sold
+              ? `
+                <span class="status sold">
+                  VENDU
+                </span>
+              `
+              : ""
+          }
+
+
+          <div class="kicker">
+            LEADY COMMERCE
+          </div>
+
+
+          <h1>
+            ${esc(name)}
+          </h1>
+
+
+          <div class="horse-detail-meta">
+
+            ${
+              discipline
+                ? `
+                  <div>
+                    <span>DISCIPLINE</span>
+                    <strong>${esc(discipline)}</strong>
+                  </div>
+                `
+                : ""
+            }
+
+
+            ${
+              sexe
+                ? `
+                  <div>
+                    <span>SEXE</span>
+                    <strong>${esc(sexe)}</strong>
+                  </div>
+                `
+                : ""
+            }
+
+
+            ${
+              age
+                ? `
+                  <div>
+                    <span>ÂGE</span>
+                    <strong>${esc(age)} ans</strong>
+                  </div>
+                `
+                : ""
+            }
+
+          </div>
+
+
+          <div class="horse-detail-price">
+
+            ${esc(
+              price(
+                horse.prix ??
+                horse.price
+              )
+            )}
+
+          </div>
+
+
+          <div class="horse-detail-description">
+
+            <div class="kicker">
+              DESCRIPTION
+            </div>
+
+            <p>
+              ${
+                description
+                  ? esc(description)
+                  : "Aucune description disponible."
+              }
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    `;
+
+  } catch (error) {
+
+    console.error(
+      "Erreur chargement cheval :",
+      error
+    );
+
+    box.innerHTML = `
+
+      <div class="empty">
+
+        Impossible de charger le cheval.
+
+        <br>
+
+        <small>
+          ${esc(error.message)}
+        </small>
+
+      </div>
+
+    `;
+
+  }
+
+}
+
+
+const menu =
+  document.getElementById("menu");
+
+const nav =
+  document.querySelector(".nav");
+
+
+if (menu) {
+
+  menu.addEventListener(
+    "click",
+    () => nav.classList.toggle("nav-open")
+  );
+
+}
+
+
+document.addEventListener(
+  "DOMContentLoaded",
+  loadHorse
+);
+
+</script>
+
+</body>
+</html>
